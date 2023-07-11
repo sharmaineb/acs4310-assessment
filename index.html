@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>2019 World Happiness Bar Graph</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <style>
+    text {
+        font-family: Helvetica, sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <svg id="chart"></svg>
+
+  <script>
+    d3.csv("2019.csv").then(function(data) {
+      const top10Countries = data.filter((d, i) => i < 10);
+      console.log(top10Countries);
+
+      // colors for the bars
+      const customColors = ["#414141", 
+      "#FFC0CB", "#008080", "#4B0082", 
+      "#FF7F50", "#E0E0FA", "#FFD700", 
+      "#7FFF00", "#6A5ACD", "#FF8C00"];
+
+      // color the bars
+      const colorScale = d3
+        .scaleOrdinal()
+        .domain(top10Countries.map((d) => d["Country or region"]))
+        .range(customColors);
+
+      // dimensions and margins
+      const margin = { top: 20, right: 20, bottom: 40, left: 60 };
+      const width = 850 - margin.left - margin.right;
+      const height = 500 - margin.top - margin.bottom;
+
+      // x-scale
+      const xScale = d3
+        .scaleBand()
+        .domain(top10Countries.map((d) => d["Country or region"]))
+        .range([margin.left, width - margin.right])
+        .padding(0.1);
+
+      // y-scale
+      const yScale = d3
+        .scaleLinear()
+        .domain([
+          Math.floor(d3.min(top10Countries, (d) => +d["Score"])),
+          Math.ceil(d3.max(top10Countries, (d) => +d["Score"])),
+        ])
+        .range([height - margin.bottom, margin.top]);
+
+      // SVG container
+      const svg = d3
+        .select("#chart")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // draw the bars
+      svg
+        .selectAll("rect")
+        .data(top10Countries)
+        .enter()
+        .append("rect")
+        .attr("x", (d) => xScale(d["Country or region"]))
+        .attr("y", (d) => yScale(+d["Score"]))
+        .attr("width", xScale.bandwidth())
+        .attr("height", (d) => height - margin.bottom - yScale(+d["Score"]))
+        .attr("fill", (d, i) => colorScale(d["Country or region"]));
+
+      const xAxis = d3.axisBottom(xScale);
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(xAxis);
+
+      const yAxis = d3.axisLeft(yScale);
+      svg.append("g").attr("transform", `translate(${margin.left},0)`).call(yAxis);
+
+      svg
+        .append("text")
+        .attr("x", (width + margin.left + margin.right) / 2)
+        .attr("y", margin.top / 2)
+        .attr("text-anchor", "middle")
+        .text("🌎 Top 10 Happiest Countries in the World 🌍 ");
+
+    });
+  </script>
+</body>
+</html>
